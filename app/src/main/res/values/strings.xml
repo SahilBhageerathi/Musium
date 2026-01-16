@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Musium</string>
+
+    <string name="onboarding_text">
+        <![CDATA[
+        From the <highlight>latest</highlight> to the <highlight>greatest</highlight> hits, play your favourite track on <highlight>Musium</highlight>
+        ]]>
+</string>
+
+    <string name="search_hint">Search</string>
+    <string name="get_started">Get Started</string>
+    <string name="sign_in_title">Lets get you in</string>
+    <string name="continue_with_google">Continue with Google</string>
+    <string name="continue_with_fb">Continue with Facebook</string>
+    <string name="continue_with_apple">Continue with apple</string>
+    <string name="login_with_password">Log in with a password</string>
+    <string name="no_account">Dont have a account?</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="or">or</string>
+
+
+    <string name="login_title">Login to your account</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="remember_me">Remember me</string>
+    <string name="loginTxt">Log in</string>
+    <string name="forgot_password">Forgot the password?</string>
+    <string name="or_continue_with">or continue with</string>
+
+</resources>
