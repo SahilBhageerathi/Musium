@@ -65,7 +65,7 @@ fun PlaylistDetailsScreen(
         ) {
             item {
                 PlaylistDetailsTopBar(
-                    title = "FROM \"PLAYLISTS\"",
+                    title = "FROM $playListName",
                     onBack = onBack,
                     onMore = {}
                 )
