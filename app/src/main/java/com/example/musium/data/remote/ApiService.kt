@@ -17,7 +17,7 @@ interface ApiService {
 
     @GET("browse/new-releases")
     suspend fun getNewReleases(
-        @Query("market") marker: String = "IN",
+        @Query("market") market: String = "IN",
         @Query("limit") limit: Int = 20,
         @Query("offset") offset: Int = 0
     ): Response<NewReleases>
@@ -42,7 +42,7 @@ interface ApiService {
     suspend fun getPlaylistTracks(
         @Path("playlistId") playlistId: String,
         @Query("market") market: String = "IN",
-        @Query("limit") limit: Int = 50,
+        @Query("limit") limit: Int = 10,
         @Query("offset") offset: Int = 0
     ): Response<PlaylistTracksResponseDto>
 }
