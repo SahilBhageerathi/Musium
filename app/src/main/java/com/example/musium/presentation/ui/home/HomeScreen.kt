@@ -41,15 +41,18 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.times
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import com.example.musium.R
 import com.example.musium.domain.model.Album
 import com.example.musium.domain.model.Playlist
 import com.example.musium.domain.model.User
+import com.example.musium.presentation.ui.home.widgets.browseAllAlbumsSection
 import com.valentinilk.shimmer.ShimmerBounds
 import com.valentinilk.shimmer.rememberShimmer
 import com.valentinilk.shimmer.shimmer
@@ -63,6 +66,7 @@ fun HomeScreen(
 ) {
 
     val state = viewModel.homeState.collectAsStateWithLifecycle().value
+    val albums = viewModel.newReleasesPagingFlow.collectAsLazyPagingItems()
 
     Scaffold {
 
@@ -90,7 +94,7 @@ fun HomeScreen(
             }
 
             item {
-                continueListeningSection(state.albums)
+                continueListeningSection(albums)
             }
 
             item {
@@ -117,9 +121,11 @@ fun HomeScreen(
                 )
             }
 
-            item {
-                AlbumSection(state.albums)
-            }
+            browseAllAlbumsSection(
+                albums = albums,
+                onAlbumClick = { }
+            )
+
         }
     }
 
@@ -174,31 +180,54 @@ fun HomeHeader(user: User?) {
 }
 
 @Composable
-fun continueListeningSection(albums: List<Album>) {
-    val visibleAlbums = albums.take(6)
+fun continueListeningSection(albums: LazyPagingItems<Album>) {
+    val refreshState = albums.loadState.refresh
     Column {
-        Text("Continue Listening = ${albums.size}", color = Color.White)
+        Text("Continue Listening", color = Color.White)
         Spacer(modifier = Modifier.size(10.dp))
-        LazyVerticalGrid(
-            modifier = Modifier.height((60.dp * 3) + (8.dp * 2)),
-            columns = GridCells.Fixed(2),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            userScrollEnabled = false
-        ) {
-            items(
-                items = visibleAlbums,
-                key = { visibleAlbums -> visibleAlbums.id }
-            ) { album ->
-                continueListeningItem(
-                    album = album,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.surface),
-                    {})
+
+        when (refreshState) {
+            is LoadState.Loading -> {
+                ContinueListeningGridPlaceholders()
             }
+
+            is LoadState.Error -> {
+
+            }
+
+            is LoadState.NotLoading -> {
+
+                if (albums.itemCount > 0) {
+                    LazyVerticalGrid(
+                        modifier = Modifier.height((60.dp * 3) + (8.dp * 2)),
+                        columns = GridCells.Fixed(2),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        userScrollEnabled = false
+                    ) {
+                        items(
+                            count = minOf(6, albums.itemCount),
+                            key = { index: Int ->
+                                albums.peek(index)?.id ?: index
+                            }
+                        ) { index ->
+                            val album = albums[index]
+                            if (album != null) {
+                                continueListeningItem(
+                                    album = album,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(60.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(MaterialTheme.colorScheme.surface),
+                                    {})
+                            }
+
+                        }
+                    }
+                }
+            }
+
         }
     }
 
@@ -228,6 +257,32 @@ fun continueListeningItem(album: Album, modifier: Modifier, onItemClick: () -> U
             overflow = TextOverflow.Ellipsis
         )
     }
+}
+
+@Composable
+private fun ContinueListeningGridPlaceholders() {
+    LazyVerticalGrid(
+        modifier = Modifier.height((60.dp * 3) + (8.dp * 2)),
+        columns = GridCells.Fixed(2),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        userScrollEnabled = false
+    ) {
+        items(count = 6) {
+            ContinueListeningTilePlaceholder()
+        }
+    }
+}
+
+@Composable
+private fun ContinueListeningTilePlaceholder() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+    )
 }
 
 @Composable
@@ -303,97 +358,6 @@ fun TrendingItem(playlist: Playlist, onItemClick: (Playlist) -> Unit) {
             )
             Text(
                 text = playlist.name,
-                color = Color.White,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun AlbumSection(albums: List<Album>) {
-
-    val rows = (albums.size + 1) / 2
-    val itemHeight = 180.dp
-    val spacing = 8.dp
-    val totalHeight = (rows * itemHeight) + ((rows - 1) * spacing)
-
-    LazyVerticalGrid(
-        modifier = Modifier.height(totalHeight),
-        columns = GridCells.Fixed(2),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        userScrollEnabled = false
-    ) {
-        items(
-            items = albums,
-            key = { albums -> albums.id }
-        ) { album ->
-            AlbumItem(
-                album = album,
-                {})
-        }
-    }
-}
-
-@Composable
-fun AlbumItem(album: Album, onItemClick: () -> Unit) {
-    val shimmer = rememberShimmer(shimmerBounds = ShimmerBounds.View)
-    var isImageLoaded by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = Modifier
-            .padding(4.dp)
-            .height(180.dp)
-            .fillMaxWidth()
-            .clickable {
-                onItemClick()
-            },
-        shape = RoundedCornerShape(4.dp)
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            SubcomposeAsyncImage(
-                model = album.images.firstOrNull()?.url,
-                contentDescription = album.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-                loading = {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .shimmer(shimmer)
-                            .background(Color.Gray.copy(alpha = 0.4f))
-                    )
-                },
-                error = {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.DarkGray),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Failed to load", color = Color.White)
-                    }
-                }
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
-                        )
-                    )
-            )
-            Text(
-                text = album.name,
                 color = Color.White,
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 1,
