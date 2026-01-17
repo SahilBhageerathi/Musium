@@ -56,6 +56,7 @@ import com.valentinilk.shimmer.shimmer
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
