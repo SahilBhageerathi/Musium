@@ -9,7 +9,7 @@ import com.example.musium.data.remote.safeApiCall
 import jakarta.inject.Inject
 
 interface AlbumsRemoteDataSource {
-    suspend fun getNewReleases(): ApiResponse<NewReleases>
+     suspend fun getNewReleases(limit: Int, offset: Int): ApiResponse<NewReleases>
     suspend fun searchPlaylists(query: String): ApiResponse<SearchPlaylistsResponseDto>
     suspend fun getPlaylistTracks(id: String): ApiResponse<PlaylistTracksResponseDto>
 }
@@ -18,9 +18,15 @@ interface AlbumsRemoteDataSource {
 class AlbumsRemoteDataSourceImpl @Inject constructor(
     private val api: ApiService
 ) : AlbumsRemoteDataSource {
-    override suspend fun getNewReleases(): ApiResponse<NewReleases> {
+    override suspend fun getNewReleases(
+        limit: Int,
+        offset: Int
+    ): ApiResponse<NewReleases> {
         return safeApiCall {
-            api.getNewReleases()
+            api.getNewReleases(
+                limit = limit,
+                offset = offset
+            )
         }
     }
 

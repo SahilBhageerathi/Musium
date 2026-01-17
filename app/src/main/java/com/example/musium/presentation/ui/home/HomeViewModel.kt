@@ -2,10 +2,14 @@ package com.example.musium.presentation.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import com.example.musium.domain.model.Album
 import com.example.musium.domain.usecase.FetchAlbumsUseCase
 import com.example.musium.domain.usecase.GetUserUseCase
 import com.example.musium.domain.usecase.SearchTeluguHindiPlayListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -17,7 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getUserUseCase: GetUserUseCase,
-    private val fetchAlbumsUseCase: FetchAlbumsUseCase,
+    fetchAlbumsUseCase: FetchAlbumsUseCase,
     private val searchTopHindiTeluguPlayListUseCase: SearchTeluguHindiPlayListUseCase
 ) : ViewModel() {
     private var _homeState = MutableStateFlow(HomeState())
@@ -26,6 +30,9 @@ class HomeViewModel @Inject constructor(
 
     private var _homeEvent = MutableSharedFlow<HomeEvent>()
     val homeEvent = _homeEvent.asSharedFlow()
+
+
+    val newReleasesPagingFlow: Flow<PagingData<Album>> = fetchAlbumsUseCase().cachedIn(viewModelScope)
 
     init {
         onEvent(HomeEvent.InitializeEvent)
@@ -61,29 +68,6 @@ class HomeViewModel @Inject constructor(
                     )
                 }
             }
-
-
-            runCatching {
-                fetchAlbumsUseCase()
-            }.onSuccess { albums ->
-                _homeState.update {
-                    it.copy(
-                        albums = albums
-                    )
-                }
-
-            }.onFailure { e ->
-
-                    _homeState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = e.message ?: "Failed to fetch albums"
-                        )
-                    }
-
-                }
-
-
 
             runCatching {
                 searchTopHindiTeluguPlayListUseCase()
